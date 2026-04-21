@@ -1,38 +1,45 @@
-
 import React, { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Users, TrendingUp, AlertCircle, Calendar, CreditCard,
-  Timer, UserPlus, CheckCircle2, Trophy as TrophyIcon, Plus,
-  ArrowUpRight, ArrowDownRight, BarChart3, ArrowRight, Baby,
-  Edit2, X, Trash2, Clock, BookOpen, QrCode, Scan, Zap, Cake, Store, Activity, History, Shield, Instagram
+import {
+  Users, TrendingUp, AlertCircle, Calendar,
+  Timer, UserPlus, CheckCircle2, Trophy as TrophyIcon,
+  ArrowUpRight, ArrowDownRight, BarChart3, ArrowRight,
+  Store, Activity, Shield, Instagram, Zap, Cake
 } from 'lucide-react';
+
 import { useTranslation } from '../contexts/LanguageContext';
 import { useProfile } from '../contexts/ProfileContext';
 import { useData } from '../contexts/DataContext';
 import { StudentStatus } from '../types';
 
-const StatCard = ({ title, value, icon, color, trend, trendUp }: any) => (
-  <div className="bg-white dark:bg-slate-900 p-5 sm:p-6 rounded-[2rem] sm:rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
-    <div className="flex items-center justify-between mb-4">
-      <div className={`p-3 sm:p-4 rounded-2xl ${color} bg-opacity-10 group-hover:scale-110 transition-all`}>
-        {React.cloneElement(icon, { className: color.replace('bg-', 'text-'), size: 20 })}
-      </div>
-      <div className={`flex items-center gap-1 text-[9px] sm:text-[10px] font-black px-2 py-1 rounded-lg uppercase tracking-wider ${trendUp ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
-        {trendUp ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
+const StatCard = ({ title, value, icon, trend, trendUp }: any) => (
+  <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border shadow-sm">
+    <div className="flex justify-between mb-2">
+      {icon}
+      <span className={trendUp ? 'text-green-500' : 'text-red-500'}>
+        {trendUp ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
         {trend}
-      </div>
+      </span>
     </div>
-    <h3 className="text-slate-500 dark:text-slate-400 text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] mb-1">{title}</h3>
-    <p className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tighter">{value}</p>
+    <p className="text-xs text-gray-500">{title}</p>
+    <p className="text-xl font-bold">{value}</p>
   </div>
 );
 
 const Dashboard: React.FC = () => {
   const { t } = useTranslation();
   const { profile } = useProfile();
-  const { students, payments, schedules, extraRevenue, lessonPlans } = useData();
   const navigate = useNavigate();
+
+  // ✅ PROTEÇÃO TOTAL AQUI
+  const {
+    students = [],
+    payments = [],
+    schedules = [],
+    extraRevenue = [],
+    lessonPlans = []
+  } = useData();
+
   const [now, setNow] = useState(new Date());
 
   useEffect(() => {
@@ -40,396 +47,111 @@ const Dashboard: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
-  const validStudents = students.filter(s => s.status !== StudentStatus.INACTIVE);
+  // ✅ TODOS PROTEGIDOS
+  const validStudents = (students || []).filter(s => s.status !== StudentStatus.INACTIVE);
   const totalStudents = validStudents.length;
-  const activeStudents = students.filter(s => s.status === StudentStatus.ACTIVE).length;
-  
-  const currentMonth = now.toISOString().substring(0, 7);
-  const monthlyRevenue = payments
-    .filter(p => p.status === 'Confirmed' && p.date.startsWith(currentMonth))
+
+  const activeStudents = (students || []).filter(s => s.status === StudentStatus.ACTIVE).length;
+
+  const monthlyRevenue = (payments || [])
+    .filter(p => p.status === 'Confirmed')
     .reduce((sum, p) => sum + p.amount, 0);
 
-  const monthlyExtra = extraRevenue
-    .filter(r => r.date.startsWith(currentMonth))
+  const monthlyExtra = (extraRevenue || [])
     .reduce((sum, r) => sum + r.amount, 0);
-    
-  const pendingPaymentsCount = students.filter(s => s.status === StudentStatus.OVERDUE).length;
-  const competitorsCount = students.filter(s => s.isCompetitor).length;
+
+  const pendingPaymentsCount = (students || [])
+    .filter(s => s.status === StudentStatus.OVERDUE).length;
+
+  const competitorsCount = (students || [])
+    .filter(s => s.isCompetitor).length;
+
+  const latestPlan = lessonPlans?.[0] || null;
+
+  const currentClass = (schedules || []).find(cls => {
+    const [h, m] = cls.time.split(':').map(Number);
+    const nowMin = now.getHours() * 60 + now.getMinutes();
+    const clsMin = h * 60 + m;
+    return nowMin >= clsMin && nowMin < clsMin + 90;
+  });
 
   const upcomingBirthdays = useMemo(() => {
-    const currentMonthIdx = now.getMonth();
-    return students.filter(s => {
+    const currentMonth = now.getMonth();
+    return (students || []).filter(s => {
       if (!s.birthDate) return false;
-      const bDate = new Date(s.birthDate);
-      return bDate.getMonth() === currentMonthIdx;
-    }).sort((a, b) => new Date(a.birthDate).getDate() - new Date(b.birthDate).getDate());
+      return new Date(s.birthDate).getMonth() === currentMonth;
+    });
   }, [students, now]);
-
-  const revenueGoal = 15000;
-  const revenueProgress = Math.min((monthlyRevenue / revenueGoal) * 100, 100);
 
   const auth = JSON.parse(localStorage.getItem('oss_auth') || '{}');
   const isMasterAdmin = auth.email === 'dashfire@gmail.com';
 
-  const latestPlan = useMemo(() => {
-    return lessonPlans[0];
-  }, [lessonPlans]);
-
-  const currentClass = useMemo(() => {
-    const hour = now.getHours();
-    const minutes = now.getMinutes();
-    const currentTime = `${hour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-    
-    return schedules.find(cls => {
-      const [clsHour, clsMin] = cls.time.split(':').map(Number);
-      const clsTotalMin = clsHour * 60 + clsMin;
-      const currentTotalMin = hour * 60 + minutes;
-      // Considera aula em progresso se estiver dentro de 90 min do início
-      return currentTotalMin >= clsTotalMin && currentTotalMin < clsTotalMin + 90;
-    });
-  }, [schedules, now]);
-
   return (
-    <div className="space-y-4 sm:space-y-6 pb-12 w-full animate-in fade-in duration-700 overflow-x-hidden">
-      {/* Welcome Section */}
-      <div className="relative overflow-hidden bg-slate-900 dark:bg-slate-900 rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-8 text-white shadow-2xl">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-600 rounded-full blur-[120px] opacity-20 -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-cyan-600 rounded-full blur-[100px] opacity-10 translate-y-1/2 -translate-x-1/2" />
-        
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-3">
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-md rounded-full border border-white/10">
-                <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-blue-200">SysBJJ 2.0 • {profile.academyName}</span>
-              </div>
-            </div>
-            <h1 className="text-3xl sm:text-5xl font-black tracking-tighter uppercase leading-none">
-              Oss, Sensei <span className="text-blue-400">{profile.name.split(' ')[0]}</span>
-            </h1>
-            <p className="text-slate-400 font-medium italic text-xs sm:text-sm max-w-xl">
-              "{t('dashboard.quote')}"
-            </p>
-          </div>
-          
-          {currentClass && (
-            <div className="bg-blue-600/30 backdrop-blur-xl border border-blue-500/30 p-4 rounded-2xl flex items-center gap-4 animate-pulse">
-              <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center shadow-lg shadow-blue-500/50">
-                <Zap size={20} className="text-white" />
-              </div>
-              <div>
-                <p className="text-[9px] font-black text-blue-300 uppercase tracking-widest mb-0.5">{t('dashboard.classInProgress')}</p>
-                <p className="text-base font-black uppercase tracking-tight">{currentClass.title}</p>
-                <p className="text-[9px] font-bold text-blue-200 uppercase tracking-widest">{currentClass.time} • {currentClass.instructor}</p>
-              </div>
-            </div>
-          )}
-          
-          <div className="flex flex-wrap gap-3">
-            <button 
-              onClick={() => navigate('/exhibition')}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-white/10 backdrop-blur-md text-white border border-white/20 px-6 py-4 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-white/20 transition-all active:scale-95"
-            >
-              <Activity size={18} /> {t('exhibition.title')}
-            </button>
-            <button 
-              onClick={() => navigate('/attendance')}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-white text-slate-900 px-6 py-4 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-blue-50 transition-all active:scale-95"
-            >
-              <QrCode size={18} /> {t('common.attendance')}
-            </button>
-            <button 
-              onClick={() => navigate('/students')}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-4 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-blue-500/30 hover:bg-blue-700 transition-all active:scale-95"
-            >
-              <UserPlus size={18} /> {t('common.newStudent')}
-            </button>
-          </div>
+    <div className="p-4 space-y-6">
+
+      <h1 className="text-2xl font-bold">
+        Oss, {profile?.name?.split(' ')[0] || 'Sensei'}
+      </h1>
+
+      {currentClass && (
+        <div className="p-4 bg-blue-100 rounded-xl">
+          Aula em andamento: {currentClass.title} ({currentClass.time})
         </div>
+      )}
+
+      {/* STATS */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <StatCard title="Total" value={totalStudents} icon={<Users />} trend="+" trendUp />
+        <StatCard title="Ativos" value={activeStudents} icon={<CheckCircle2 />} trend="+" trendUp />
+        <StatCard title="Atletas" value={competitorsCount} icon={<TrophyIcon />} trend="+" trendUp />
+        <StatCard title="Receita" value={`R$ ${monthlyRevenue}`} icon={<TrendingUp />} trend="+" trendUp />
+        <StatCard title="Extra" value={`R$ ${monthlyExtra}`} icon={<Store />} trend="+" trendUp />
+        <StatCard title="Pendentes" value={pendingPaymentsCount} icon={<AlertCircle />} trend="-" />
       </div>
 
-      {/* Instagram Update Banner */}
-      <div className="bg-gradient-to-r from-pink-600/10 to-purple-600/10 border border-pink-500/20 rounded-3xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 rounded-xl flex items-center justify-center text-white shadow-lg">
-            <Instagram size={20} />
-          </div>
-          <div>
-            <p className="text-[10px] font-black text-pink-600 dark:text-pink-400 uppercase tracking-widest">Siga para Atualizações</p>
-            <p className="text-sm font-bold dark:text-white">Acompanhe novidades e sugira melhorias em <span className="text-pink-500">@sysbjj.26</span></p>
-          </div>
-        </div>
-        <a 
-          href="https://instagram.com/sysbjj.26" 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="px-6 py-2 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-sm hover:shadow-md transition-all"
-        >
-          Seguir Agora
-        </a>
+      {/* AÇÕES */}
+      <div className="flex gap-3 flex-wrap">
+        <button onClick={() => navigate('/students')} className="btn">
+          <UserPlus /> Novo Aluno
+        </button>
+
+        <button onClick={() => navigate('/attendance')} className="btn">
+          Presença
+        </button>
+
+        <button onClick={() => navigate('/business')} className="btn">
+          Financeiro
+        </button>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 sm:gap-6">
-        <StatCard title={t('dashboard.stats.total')} value={totalStudents} icon={<Users size={24} />} color="bg-blue-600" trend={t('dashboard.stats.registrations')} trendUp={true} />
-        <StatCard title={t('dashboard.stats.active')} value={activeStudents} icon={<CheckCircle2 size={24} />} color="bg-cyan-600" trend={t('dashboard.stats.frequent')} trendUp={true} />
-        <StatCard title={t('students.isCompetitor')} value={competitorsCount} icon={<TrophyIcon size={24} />} color="bg-yellow-500" trend="Atletas" trendUp={true} />
-        <StatCard title={t('dashboard.stats.revenue')} value={`R$ ${monthlyRevenue}`} icon={<TrendingUp size={24} />} color="bg-orange-600" trend={t('dashboard.stats.month')} trendUp={true} />
-        <StatCard title={t('dashboard.stats.extra')} value={`R$ ${monthlyExtra}`} icon={<Store size={24} />} color="bg-emerald-600" trend={t('dashboard.stats.services')} trendUp={true} />
-        <StatCard title={t('dashboard.stats.pending')} value={pendingPaymentsCount} icon={<AlertCircle size={24} />} color="bg-red-600" trend={t('dashboard.stats.billing')} trendUp={false} />
+      {/* ANIVERSÁRIOS */}
+      <div>
+        <h2 className="font-bold mb-2">Aniversários do mês</h2>
+        {(upcomingBirthdays || []).length === 0 && <p>Nenhum</p>}
+
+        {(upcomingBirthdays || []).map((s, i) => (
+          <div key={i} className="p-2 border mb-1">
+            {s.name}
+          </div>
+        ))}
       </div>
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Left Column: QTD & Schedule */}
-        <div className="lg:col-span-8 space-y-8">
-          {/* QTD Card */}
-          <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600 rounded-full blur-[100px] opacity-[0.03]" />
-            <div className="flex items-center justify-between mb-6">
-              <div className="space-y-1">
-                <h3 className="text-xl font-black dark:text-white uppercase tracking-tighter flex items-center gap-2">
-                  <BookOpen size={24} className="text-blue-600" /> {t('curriculum.title')}
-                </h3>
-                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-8">{t('curriculum.subtitle')}</p>
-              </div>
-              <button 
-                onClick={() => navigate('/curriculum')} 
-                className="group flex items-center gap-2 text-[9px] font-black text-blue-600 uppercase tracking-widest bg-blue-50 dark:bg-blue-900/20 px-4 py-2.5 rounded-xl hover:bg-blue-600 hover:text-white transition-all"
-              >
-                {t('curriculum.plannerTab')} <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
-              </button>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div 
-                onClick={() => navigate('/curriculum')}
-                className="p-6 bg-slate-50 dark:bg-slate-800 rounded-[1.5rem] border border-slate-100 dark:border-slate-700 relative group cursor-pointer hover:border-blue-200 dark:hover:border-blue-800 transition-all"
-              >
-                <div className="flex items-center gap-4 mb-4">
-                   <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg rotate-3 group-hover:rotate-6 transition-transform">
-                      <Zap size={24} />
-                   </div>
-                   <div>
-                      <p className="font-black text-lg dark:text-white uppercase tracking-tight leading-none mb-1">{t('curriculum.techFocus')}</p>
-                      <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest truncate max-w-[150px]">
-                        {latestPlan ? latestPlan.title : t('curriculum.noActivePlan')}
-                      </p>
-                   </div>
-                </div>
-                <div className="space-y-2">
-                  {latestPlan ? (
-                    <>
-                      {latestPlan.techniques.slice(0, 2).map(tech => (
-                        <div key={tech.id} className="flex items-center gap-2">
-                          <div className="w-1 h-1 bg-blue-600 rounded-full" />
-                          <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300 truncate">{tech.name}</span>
-                        </div>
-                      ))}
-                      {latestPlan.ruleFocus && (
-                        <div className="mt-3 p-2 bg-amber-50 dark:bg-amber-900/10 rounded-lg border border-amber-100 dark:border-amber-900/30">
-                          <p className="text-[8px] font-black text-amber-600 uppercase tracking-widest mb-0.5">{t('ibjjfRules.ruleFocus')}</p>
-                          <p className="text-[9px] font-bold text-slate-700 dark:text-slate-300 line-clamp-1">{latestPlan.ruleFocus}</p>
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <p className="text-[10px] text-slate-400 italic">{t('curriculum.noActivePlanDesc')}</p>
-                  )}
-                </div>
-              </div>
+      {/* PAGAMENTOS RECENTES */}
+      <div>
+        <h2 className="font-bold mb-2">Pagamentos recentes</h2>
 
-              <div className="p-6 bg-slate-900 rounded-[1.5rem] text-white relative flex flex-col justify-between group cursor-pointer overflow-hidden">
-                <div className="absolute top-0 right-0 w-24 h-24 bg-blue-600 rounded-full blur-[50px] opacity-20" />
-                <div className="relative z-10">
-                  <p className="text-[9px] font-black text-blue-400 uppercase tracking-[0.3em] mb-3">{t('dashboard.revenueGoal')}</p>
-                  <div className="flex items-end justify-between mb-3">
-                    <h4 className="text-2xl font-black tracking-tighter">{t('common.currencySymbol')} {monthlyRevenue}</h4>
-                    <span className="text-[10px] font-bold text-slate-400">{t('dashboard.goal')}: {t('common.currencySymbol')} {revenueGoal}</span>
-                  </div>
-                  <div className="h-2 bg-white/10 rounded-full overflow-hidden mb-2">
-                    <div 
-                      className="h-full bg-gradient-to-r from-blue-600 to-cyan-400 transition-all duration-1000 ease-out"
-                      style={{ width: `${revenueProgress}%` }}
-                    />
-                  </div>
-                  <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">{revenueProgress.toFixed(1)}% {t('dashboard.reached')}</p>
-                </div>
-                <button 
-                  onClick={() => navigate('/business')}
-                  className="relative z-10 mt-4 flex items-center justify-center gap-2 py-2.5 bg-white/5 hover:bg-white/10 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
-                >
-                  {t('dashboard.viewDetails')} <ArrowUpRight size={12} />
-                </button>
-              </div>
-            </div>
+        {(payments || []).slice(-5).map((p, i) => (
+          <div key={i} className="p-2 border mb-1">
+            {p.name} - R$ {p.amount}
           </div>
-
-          {/* Schedule Section */}
-          <div className="bg-white dark:bg-slate-900 rounded-[2rem] sm:rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-            <div className="p-6 sm:p-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50">
-              <div className="space-y-1">
-                <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">{t('dashboard.schedule')}</h3>
-                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{t('dashboard.dailySchedule')}</p>
-              </div>
-              <button onClick={() => navigate('/classes')} className="p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-500 hover:text-blue-600 transition-all shadow-sm">
-                <Calendar size={18} />
-              </button>
-            </div>
-            <div className="divide-y divide-slate-50 dark:divide-slate-800/50">
-              {schedules.length > 0 ? schedules.map((cls, i) => (
-                <div key={i} className="p-8 sm:p-10 flex items-center justify-between hover:bg-slate-50/80 dark:hover:bg-slate-800/30 transition-all group cursor-pointer">
-                  <div className="flex items-center gap-6 sm:gap-8">
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-blue-50 dark:bg-blue-900/30 rounded-[2rem] flex flex-col items-center justify-center border border-blue-100 dark:border-blue-800 group-hover:scale-105 transition-transform">
-                      <span className="text-blue-600 dark:text-blue-400 font-black text-sm sm:text-base uppercase">{cls.time}</span>
-                    </div>
-                    <div>
-                      <p className="font-black text-slate-900 dark:text-white text-lg sm:text-xl tracking-tight uppercase leading-none mb-3">{cls.title}</p>
-                      <div className="flex flex-wrap items-center gap-4">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                          <Clock size={14} className="text-blue-500" /> {cls.instructor || t('common.instructor')}
-                        </p>
-                        <div className="w-1 h-1 bg-slate-300 rounded-full" />
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                          <Users size={14} className="text-cyan-500" /> {cls.category}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); navigate('/attendance'); }} 
-                    className="opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 transition-all px-8 py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-xl"
-                  >
-                    {t('common.attendance')}
-                  </button>
-                </div>
-              )) : (
-                <div className="py-20 text-center space-y-4">
-                  <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto text-slate-400">
-                    <Calendar size={32} />
-                  </div>
-                  <p className="text-slate-400 font-black uppercase text-xs tracking-widest italic">{t('dashboard.noClassesToday')}</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Right Column: Celebrations & Flow */}
-        <div className="lg:col-span-4 space-y-8">
-          {/* Quick Actions Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-            <button 
-              onClick={() => navigate('/timer')}
-              className="p-6 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group text-left"
-            >
-              <div className="w-12 h-12 bg-red-50 dark:bg-red-900/20 rounded-xl flex items-center justify-center text-red-600 mb-4 group-hover:scale-110 transition-transform">
-                <Timer size={24} />
-              </div>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t('dashboard.training')}</p>
-              <p className="font-black text-slate-900 dark:text-white uppercase tracking-tight">{t('common.timer')}</p>
-            </button>
-            <button 
-              onClick={() => navigate('/assistant')}
-              className="p-6 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group text-left"
-            >
-              <div className="w-12 h-12 bg-purple-50 dark:bg-purple-900/20 rounded-xl flex items-center justify-center text-purple-600 mb-4 group-hover:scale-110 transition-transform">
-                <Zap size={24} />
-              </div>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t('dashboard.ia')}</p>
-              <p className="font-black text-slate-900 dark:text-white uppercase tracking-tight">{t('common.assistant')}</p>
-            </button>
-
-            {isMasterAdmin && (
-              <button 
-                onClick={() => navigate('/audit')}
-                className="p-6 bg-slate-900 dark:bg-blue-600 rounded-[2rem] border border-slate-800 dark:border-blue-500 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group text-left"
-              >
-                <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center text-white mb-4 group-hover:scale-110 transition-transform">
-                  <Shield size={24} />
-                </div>
-                <p className="text-[10px] font-black text-blue-200 uppercase tracking-widest mb-1">Master Admin</p>
-                <p className="font-black text-white uppercase tracking-tight">Auditoria</p>
-              </button>
-            )}
-          </div>
-
-          {/* Celebrations */}
-          <div className="bg-amber-500 rounded-[2.5rem] sm:rounded-[3.5rem] text-slate-900 p-8 sm:p-10 shadow-2xl relative overflow-hidden flex flex-col border border-amber-400/20 group">
-             <div className="absolute top-0 right-0 w-48 h-48 bg-white rounded-full blur-[100px] opacity-20" />
-              <div className="flex items-center justify-between mb-8 relative">
-                <div className="space-y-1">
-                  <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-800">{t('dashboard.celebrations')}</h3>
-                  <p className="text-[8px] font-bold text-slate-700 uppercase tracking-widest">{t('dashboard.monthBirthdays')}</p>
-                </div>
-                <Cake className="text-slate-800 group-hover:animate-bounce" size={24} />
-              </div>
-             <div className="space-y-3 flex-1 relative max-h-[350px] overflow-y-auto scrollbar-hide pr-1">
-               {upcomingBirthdays.length > 0 ? upcomingBirthdays.map((s, i) => {
-                 const bDay = new Date(s.birthDate).getDate();
-                 const isToday = bDay === now.getDate();
-                 return (
-                   <div key={i} className={`flex items-center justify-between p-5 rounded-2xl ${isToday ? 'bg-white shadow-xl scale-[1.02]' : 'bg-white/20'} transition-all`}>
-                     <div className="flex items-center gap-4">
-                       <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-black text-lg ${isToday ? 'bg-amber-500 text-white' : 'bg-white/30 text-slate-800'}`}>
-                         {bDay}
-                       </div>
-                       <div className="min-w-0">
-                         <p className="text-xs font-black uppercase tracking-tight truncate max-w-[120px]">{s.name}</p>
-                         {isToday && <p className="text-[8px] font-black text-amber-600 uppercase">{t('dashboard.congrats')}</p>}
-                       </div>
-                     </div>
-                     <ArrowRight size={16} className="text-slate-800 opacity-30" />
-                   </div>
-                 );
-               }) : (
-                 <div className="py-12 text-center opacity-50 space-y-4">
-                    <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto">
-                      <Cake size={24} className="text-slate-800" />
-                    </div>
-                    <p className="text-[10px] font-black uppercase tracking-widest">{t('reports.noBirthdays')}</p>
-                 </div>
-               )}
-             </div>
-             <button onClick={() => navigate('/reports')} className="w-full mt-8 py-5 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg active:scale-95 transition-all hover:bg-slate-800">
-               {t('dashboard.viewCalendar')}
-             </button>
-          </div>
-
-          {/* Recent Flow */}
-          <div className="bg-slate-900 rounded-[2.5rem] sm:rounded-[3.5rem] text-white p-10 shadow-2xl relative overflow-hidden flex flex-col border border-white/5 group">
-            <div className="absolute top-0 left-0 w-48 h-48 bg-blue-600 rounded-full blur-[100px] opacity-10 pointer-events-none" />
-            <div className="flex items-center justify-between mb-10 relative">
-              <div className="space-y-1">
-                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em]">{t('dashboard.recentFlow')}</h3>
-                <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">{t('dashboard.recentTransactions')}</p>
-              </div>
-              <BarChart3 size={24} className="text-blue-500" />
-            </div>
-            <div className="space-y-8 flex-1 relative">
-               {payments.length > 0 ? payments.slice(-4).reverse().map((act, i) => (
-                 <div key={i} className="flex gap-6 relative group/item">
-                   <div className="w-12 h-12 rounded-2xl bg-slate-800 border border-white/5 flex items-center justify-center shrink-0 z-10 group-hover/item:scale-110 transition-transform">
-                     <CheckCircle2 className="text-green-400" size={20}/>
-                   </div>
-                   <div className="min-w-0">
-                     <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">{t('dashboard.paymentConfirmed')}</p>
-                     <p className="text-sm font-black tracking-tight uppercase leading-none mb-1 truncate">{act.name}</p>
-                     <p className="text-[10px] text-blue-400 font-bold">{t('common.currencySymbol')} {act.amount}</p>
-                   </div>
-                 </div>
-               )) : (
-                 <div className="py-10 text-center opacity-30 italic text-[10px] font-black uppercase tracking-widest">
-                   {t('dashboard.noRecentFlow')}
-                 </div>
-               )}
-            </div>
-            <button onClick={() => navigate('/business')} className="w-full mt-10 py-5 bg-white/5 hover:bg-white/10 rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] text-slate-400 transition-all border border-white/5 flex items-center justify-center gap-3 group">
-              {t('dashboard.financialBtn')} <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
-            </button>
-          </div>
-        </div>
+        ))}
       </div>
+
+      {isMasterAdmin && (
+        <button onClick={() => navigate('/audit')} className="btn">
+          <Shield /> Auditoria
+        </button>
+      )}
     </div>
   );
 };
