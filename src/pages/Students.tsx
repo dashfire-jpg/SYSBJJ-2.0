@@ -1,4 +1,4 @@
- const safeNumber = (value: string | number | null | undefined): number => {
+const safeNumber = (value: string | number | null | undefined): number => {
   const n = Number(value);
   return Number.isNaN(n) ? 0 : n;
 };
@@ -10,13 +10,15 @@ const StudentDetailsModal = ({
   student: Student;
   onClose: () => void;
 }) => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'analysis' | 'edit' | 'admin'>('overview');
+  const [activeTab, setActiveTab] = useState<
+    "overview" | "analysis" | "edit" | "admin"
+  >("overview");
 
   const { t } = useTranslation();
   const { deleteStudent, updateStudent } = useData();
 
-  const [editPros, setEditPros] = useState<string>(student.pros || '');
-  const [editCons, setEditCons] = useState<string>(student.cons || '');
+  const [editPros, setEditPros] = useState<string>(student.pros || "");
+  const [editCons, setEditCons] = useState<string>(student.cons || "");
   const [showSuccess, setShowSuccess] = useState<boolean>(false);
 
   const [editFormData, setEditFormData] = useState<Student>({ ...student });
@@ -42,7 +44,7 @@ const StudentDetailsModal = ({
 
     setTimeout(() => {
       setShowSuccess(false);
-      setActiveTab('overview');
+      setActiveTab("overview");
     }, 1500);
   };
 
@@ -80,35 +82,47 @@ const StudentDetailsModal = ({
 
         {/* TABS */}
         <div className="flex gap-2 p-4 bg-slate-100 dark:bg-slate-800 text-xs font-black uppercase">
-          {(['overview', 'edit', 'analysis', 'admin'] as const).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={
-                activeTab === tab ? 'text-blue-600' : 'text-slate-400'
-              }
-            >
-              {tab}
-            </button>
-          ))}
+          {(["overview", "edit", "analysis", "admin"] as const).map(
+            (tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={
+                  activeTab === tab ? "text-blue-600" : "text-slate-400"
+                }
+              >
+                {tab}
+              </button>
+            )
+          )}
         </div>
 
         {/* CONTENT */}
         <div className="p-6 overflow-y-auto flex-1">
 
           {/* OVERVIEW */}
-          {activeTab === 'overview' && (
+          {activeTab === "overview" && (
             <div className="space-y-3 text-sm">
-              <p><b>Idade:</b> {calculateAge(student.birthDate)}</p>
-              <p><b>Faixa:</b> {student.belt}</p>
-              <p><b>Telefone:</b> {student.phone}</p>
-              <p><b>Mensalidade:</b> R$ {student.monthlyValue}</p>
-              <p><b>Presenças:</b> {student.attendanceCount}</p>
+              <p>
+                <b>Idade:</b> {calculateAge(student.birthDate)}
+              </p>
+              <p>
+                <b>Faixa:</b> {student.belt}
+              </p>
+              <p>
+                <b>Telefone:</b> {student.phone}
+              </p>
+              <p>
+                <b>Mensalidade:</b> R$ {student.monthlyValue}
+              </p>
+              <p>
+                <b>Presenças:</b> {student.attendanceCount}
+              </p>
             </div>
           )}
 
           {/* EDIT */}
-          {activeTab === 'edit' && (
+          {activeTab === "edit" && (
             <form onSubmit={handleUpdateRegistration} className="grid gap-4">
 
               <input
@@ -136,23 +150,6 @@ const StudentDetailsModal = ({
                 placeholder="Mensalidade"
               />
 
-              <select
-                value={editFormData.belt}
-                onChange={(e) =>
-                  setEditFormData((prev) => ({
-                    ...prev,
-                    belt: e.target.value as Student['belt'],
-                  }))
-                }
-                className="input"
-              >
-                {Object.values(BeltColor).map((b) => (
-                  <option key={b} value={b}>
-                    {b}
-                  </option>
-                ))}
-              </select>
-
               <button className="bg-blue-600 text-white py-3 rounded-xl font-black">
                 SALVAR
               </button>
@@ -160,7 +157,7 @@ const StudentDetailsModal = ({
           )}
 
           {/* ANALYSIS */}
-          {activeTab === 'analysis' && (
+          {activeTab === "analysis" && (
             <div className="space-y-4">
 
               <textarea
@@ -187,7 +184,7 @@ const StudentDetailsModal = ({
           )}
 
           {/* ADMIN */}
-          {activeTab === 'admin' && (
+          {activeTab === "admin" && (
             <div className="space-y-4">
 
               <button
@@ -203,7 +200,7 @@ const StudentDetailsModal = ({
 
               <button
                 onClick={() => {
-                  if (confirm('Excluir aluno?')) {
+                  if (confirm("Excluir aluno?")) {
                     deleteStudent(student.id);
                     onClose();
                   }
