@@ -1,3 +1,11 @@
+export const NAVIGATION_ITEMS = [
+  { id: "dashboard", icon: "📊" },
+  { id: "students", icon: "👥" },
+  { id: "classes", icon: "🥋" },
+  { id: "business", icon: "💼" },
+  { id: "curriculum", icon: "📘" },
+];
+
 export { BELT_COLORS } from "./beltColors";
 export { IBJJF_LESSONS } from "./rulesData";
 
