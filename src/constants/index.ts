@@ -1,6 +1,7 @@
 export { BELT_COLORS } from "./beltColors";
 export { IBJJF_LESSONS } from "./rulesData";
-export { IBJJF_BELT_RULES } from "./beltColors" = {
+
+export const IBJJF_BELT_RULES = {
   kids: {
     white: { minAge: 4, maxAge: 15 },
     gray: { minAge: 4, maxAge: 15 },
