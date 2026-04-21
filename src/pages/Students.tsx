@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { useTranslation } from "../contexts/LanguageContext";
 import { useData } from "../contexts/DataContext";
 
-// ajuste se esses tipos já existirem no seu projeto
 import type { Student } from "../types";
 import { StudentStatus } from "../types";
 
@@ -74,13 +73,10 @@ const StudentDetailsModal = ({
     <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-[100] flex items-center justify-center p-4">
       <div className="bg-white dark:bg-slate-900 rounded-[2rem] w-full max-w-5xl max-h-[95vh] overflow-hidden flex flex-col">
 
-        {/* HEADER */}
         <div className="p-6 bg-slate-900 text-white flex justify-between items-center">
           <div>
             <h2 className="text-xl font-black uppercase">{student.name}</h2>
-            <p className="text-xs opacity-70">
-              {t(`belts.${student.belt}`)}
-            </p>
+            <p className="text-xs opacity-70">{t(`belts.${student.belt}`)}</p>
           </div>
 
           <button onClick={onClose} className="text-white text-xl">
@@ -88,24 +84,18 @@ const StudentDetailsModal = ({
           </button>
         </div>
 
-        {/* TABS */}
         <div className="flex gap-2 p-4 bg-slate-100 dark:bg-slate-800 text-xs font-black uppercase">
-          {(["overview", "edit", "analysis", "admin"] as const).map(
-            (tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={
-                  activeTab === tab ? "text-blue-600" : "text-slate-400"
-                }
-              >
-                {tab}
-              </button>
-            )
-          )}
+          {(["overview", "edit", "analysis", "admin"] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={activeTab === tab ? "text-blue-600" : "text-slate-400"}
+            >
+              {tab}
+            </button>
+          ))}
         </div>
 
-        {/* CONTENT */}
         <div className="p-6 overflow-y-auto flex-1">
 
           {activeTab === "overview" && (
@@ -214,5 +204,10 @@ const StudentDetailsModal = ({
 };
 
 export default function Students() {
-  return <StudentDetailsModal student={{} as any} onClose={() => {}} />;
+  return (
+    <StudentDetailsModal
+      student={{} as any}
+      onClose={() => {}}
+    />
+  );
 }
