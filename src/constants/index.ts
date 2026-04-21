@@ -1,3 +1,5 @@
+export { IBJJF_BELT_RULES, IBJJF_LESSONS } from "./rulesData";
+export { BELT_COLORS } from "./beltColors";
 export { IBJJF_BELT_RULES } from "./rulesData";
 export const IBJJF_BELT_RULES = {
   kids: {
