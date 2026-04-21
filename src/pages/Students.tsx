@@ -61,7 +61,7 @@ const StudentDetailsModal = ({
         <div className="p-4">
           {activeTab === "overview" && (
             <div>
-              <p>Idade: {calculateAge(student.birthDate)}</p>
+              <p>Idade: {student.birthDate ? calculateAge(student.birthDate) : "-"}</p>
               <p>Faixa: {student.belt}</p>
             </div>
           )}
@@ -133,7 +133,31 @@ const StudentDetailsModal = ({
 };
 
 export default function Students() {
+  const { students } = useData();
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+
   return (
-    <StudentDetailsModal student={{} as any} onClose={() => {}} />
+    <div className="p-4">
+      <h1 className="text-xl font-bold mb-4">Alunos</h1>
+
+      {students?.length === 0 && <p>Nenhum aluno cadastrado</p>}
+
+      {students?.map((student) => (
+        <div
+          key={student.id}
+          className="p-2 border mb-2 cursor-pointer"
+          onClick={() => setSelectedStudent(student)}
+        >
+          {student.name}
+        </div>
+      ))}
+
+      {selectedStudent && (
+        <StudentDetailsModal
+          student={selectedStudent}
+          onClose={() => setSelectedStudent(null)}
+        />
+      )}
+    </div>
   );
 }
