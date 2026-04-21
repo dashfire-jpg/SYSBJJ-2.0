@@ -25,7 +25,7 @@ import {
   UserPlus
 } from 'lucide-react';
 import { Student, StudentStatus, BeltColor, KidsBeltColor, Gender, CBJJCategory } from '../types';
-import { BELT_COLORS, IBJJF_BELT_RULES } from '../constants';
+import { BELT_COLORS, IBJJF_BELT_RULES } from '../constants/index';
 import { IBJJF_LESSONS } from '../constants/rulesData';
 import { useTranslation } from '../contexts/LanguageContext';
 import { useData } from '../contexts/DataContext';
