@@ -1,7 +1,6 @@
 export { BELT_COLORS } from "./beltColors";
 export { IBJJF_LESSONS } from "./rulesData";
 
-// Regras de faixa IBJJF (CORRIGIDO E ÚNICO)
 export const IBJJF_BELT_RULES = {
   kids: {
     white: { minAge: 4, maxAge: 15 },
