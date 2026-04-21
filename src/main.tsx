@@ -5,8 +5,10 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import "./index.css";
 
+/* CONTEXTOS */
 import { LanguageProvider } from "./contexts/LanguageContext";
 import { DataProvider } from "./contexts/DataContext";
+import { ProfileProvider } from "./contexts/ProfileContext";
 
 const rootElement = document.getElementById("root");
 
@@ -19,7 +21,9 @@ ReactDOM.createRoot(rootElement).render(
     <BrowserRouter>
       <LanguageProvider>
         <DataProvider>
-          <App />
+          <ProfileProvider>
+            <App />
+          </ProfileProvider>
         </DataProvider>
       </LanguageProvider>
     </BrowserRouter>
