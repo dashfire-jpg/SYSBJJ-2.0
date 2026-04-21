@@ -1,14 +1,12 @@
 import { IBJJF_LESSONS as RAW_IBJJF_LESSONS } from "./rulesData";
 import { BELT_COLORS as RAW_BELT_COLORS } from "./beltColors";
 
-// fallback seguro caso algo não exista
 export const BELT_COLORS = RAW_BELT_COLORS ?? {};
 
 export const IBJJF_LESSONS = RAW_IBJJF_LESSONS ?? {};
 
-// regra IBJJF com fallback garantido (nunca quebra build)
 export const IBJJF_BELT_RULES =
-  {
+  RAW_IBJJF_LESSONS?.IBJJF_BELT_RULES ?? {
     kids: {
       white: { minAge: 4, maxAge: 15 },
     },
@@ -18,4 +16,4 @@ export const IBJJF_BELT_RULES =
       purple: { minTime: 5 },
       brown: { minTime: 1 },
     },
-  } ?? {};
+  };
