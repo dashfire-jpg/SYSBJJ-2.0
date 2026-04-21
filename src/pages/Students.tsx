@@ -1,3 +1,11 @@
+import React, { useState } from "react";
+import { useTranslation } from "../contexts/LanguageContext";
+import { useData } from "../contexts/DataContext";
+
+// ajuste se esses tipos já existirem no seu projeto
+import type { Student } from "../types";
+import { StudentStatus } from "../types";
+
 const safeNumber = (value: string | number | null | undefined): number => {
   const n = Number(value);
   return Number.isNaN(n) ? 0 : n;
@@ -100,28 +108,16 @@ const StudentDetailsModal = ({
         {/* CONTENT */}
         <div className="p-6 overflow-y-auto flex-1">
 
-          {/* OVERVIEW */}
           {activeTab === "overview" && (
             <div className="space-y-3 text-sm">
-              <p>
-                <b>Idade:</b> {calculateAge(student.birthDate)}
-              </p>
-              <p>
-                <b>Faixa:</b> {student.belt}
-              </p>
-              <p>
-                <b>Telefone:</b> {student.phone}
-              </p>
-              <p>
-                <b>Mensalidade:</b> R$ {student.monthlyValue}
-              </p>
-              <p>
-                <b>Presenças:</b> {student.attendanceCount}
-              </p>
+              <p><b>Idade:</b> {calculateAge(student.birthDate)}</p>
+              <p><b>Faixa:</b> {student.belt}</p>
+              <p><b>Telefone:</b> {student.phone}</p>
+              <p><b>Mensalidade:</b> R$ {student.monthlyValue}</p>
+              <p><b>Presenças:</b> {student.attendanceCount}</p>
             </div>
           )}
 
-          {/* EDIT */}
           {activeTab === "edit" && (
             <form onSubmit={handleUpdateRegistration} className="grid gap-4">
 
@@ -156,7 +152,6 @@ const StudentDetailsModal = ({
             </form>
           )}
 
-          {/* ANALYSIS */}
           {activeTab === "analysis" && (
             <div className="space-y-4">
 
@@ -183,7 +178,6 @@ const StudentDetailsModal = ({
             </div>
           )}
 
-          {/* ADMIN */}
           {activeTab === "admin" && (
             <div className="space-y-4">
 
@@ -218,3 +212,7 @@ const StudentDetailsModal = ({
     </div>
   );
 };
+
+export default function Students() {
+  return <StudentDetailsModal student={{} as any} onClose={() => {}} />;
+}
